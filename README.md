@@ -4,6 +4,20 @@ Delta Force Data Center 是一个面向《三角洲行动》WeGame 战绩的本�
 
 开源版不需要额外授权服务，所有本地功能默认可用。仓库内置了一份已脱敏的样例数据，首次启动后无需登录 WeGame 也能直接体验主要页面。
 
+## 界面预览
+
+### 战绩列表
+
+![战绩列表界面预览](docs/images/record-list.jpg)
+
+### 数据分析
+
+![数据分析界面预览](docs/images/data-analysis.jpg)
+
+### 组队分析
+
+![组队分析界面预览](docs/images/team-analysis.jpg)
+
 ## 开源协议
 
 本项目采用 `AGPL-3.0-only` 协议。

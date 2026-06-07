@@ -4,6 +4,7 @@ __pycache__/
 venv/
 
 data/dev-local-server.pid
+data/*.log
 data/vault/runtime/
 data/reports/
 data/raw/
