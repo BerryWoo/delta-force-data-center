@@ -6,17 +6,31 @@ Delta Force Data Center 是一个面向《三角洲行动》WeGame 战绩的本�
 
 ## 界面预览
 
+以下截图来自仓库内置的脱敏样例数据库，可以直接了解主要页面的界面样式和数据展示方式。
+
 ### 战绩列表
 
 ![战绩列表界面预览](docs/images/record-list.jpg)
 
+### 带出物品
+
+![带出物品界面预览](docs/images/items.png)
+
 ### 数据分析
 
-![数据分析界面预览](docs/images/data-analysis.jpg)
+![数据分析界面预览](docs/images/data-analysis1.png)
+
+### 数据趋势
+
+![数据趋势界面预览](docs/images/data-analysis.png)
 
 ### 组队分析
 
-![组队分析界面预览](docs/images/team-analysis.jpg)
+![组队分析界面预览](docs/images/team-analysis.png)
+
+### 数据抓取
+
+![数据抓取界面预览](docs/images/login.png)
 
 ## 开源协议
 
