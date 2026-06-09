@@ -2753,6 +2753,8 @@ a.room-link:hover{text-decoration:underline}
 .matrix-table .heat-cell{font-weight:600;color:#1a1a2a}
 .matrix-table tr.player-head td:first-child{background:#cfe2ee;padding:7px 10px;font-weight:bold;font-size:13px;color:#1c4b63;text-align:left;border-bottom:2px solid #9bb6c8;border-right:3px solid #88a9c2;position:sticky;left:0;z-index:10;width:190px;max-width:190px}
 .matrix-table tr.player-head .pb-stats{color:#5d7486;font-size:11px;font-weight:normal;margin-left:16px}
+.matrix-table tr.player-head .other-name-label{background:#d7e8f2;color:#30566b;font-size:11px;font-weight:700}
+.matrix-table tr.player-head .other-name-cell{background:#f0f7fb;color:#30566b;font-size:11px;font-weight:700;letter-spacing:0;padding-left:3px;padding-right:3px}
 .matrix-table tr.role-row td{font-weight:700}
 .matrix-table tr.global-row td.col-tag,.matrix-table tr.global-row td.col-sum,.matrix-table tr.global-row td.col-detail{background:#e4edf3}
 .matrix-table th.col-time{min-width:120px}
@@ -6309,6 +6311,20 @@ function teamAnalysisPlayerLabel(p,players){
  if(duplicate&&p&&p.player_id)return name+' <span style="font-size:11px;color:#7f95a6;font-weight:400">ID '+esc(shortTeamPlayerId(p.player_id))+'</span>';
  return name;
 }
+function teamRecordOtherNames(pr){
+ if(!pr)return [];
+ let raw=Array.isArray(pr.other_player_names)?pr.other_player_names.slice():[];
+ let seen=new Set();
+ return raw.map(v=>String(v||'').trim()).filter(v=>{
+  if(!v||seen.has(v))return false;
+  seen.add(v);
+  return true;
+ });
+}
+function teamOtherNameText(pr){
+ let names=teamRecordOtherNames(pr);
+ return names.length?names.join(' / '):'-';
+}
 
 function teamAnalysisFileLabel(){
  let players=(lastTeamData&&lastTeamData.players)||[];
@@ -6434,7 +6450,18 @@ function renderTeamAnalysis(){
 
 players.forEach((p,pi)=>{
      let restCols=ncols-2;
-     html+='<tr class="player-head"><td colspan="2">'+teamAnalysisPlayerLabel(p,players)+'</td>'+(restCols>0?'<td colspan="'+restCols+'"></td>':'')+'</tr>';
+     let isOtherPlayer=String((p&&p.player_key)||'')===TEAM_OTHER_TOKEN;
+     if(isOtherPlayer){
+      html+='<tr class="player-head other-head"><td colspan="2">'+teamAnalysisPlayerLabel(p,players)+'</td><td class="col-detail other-name-label">队友昵称</td>';
+      games.forEach(g=>{
+       let pr=(g.player_records||[])[pi];
+       let nameText=teamOtherNameText(pr);
+       html+='<td class="other-name-cell" title="'+esc(nameText)+'">'+esc(nameText)+'</td>';
+      });
+      html+='</tr>';
+     }else{
+      html+='<tr class="player-head"><td colspan="2">'+teamAnalysisPlayerLabel(p,players)+'</td>'+(restCols>0?'<td colspan="'+restCols+'"></td>':'')+'</tr>';
+     }
 
     html+='<tr class="role-row"><td class="col-tag">常用角色</td><td class="col-sum">'+(p.common_role||'-')+'</td><td class="col-detail">角色</td>';
     games.forEach(g=>{let pr=g.player_records[pi];html+=pr?'<td>'+roleName(pr.armed_force_id)+'</td>':'<td>-</td>'});
@@ -7632,10 +7659,14 @@ class APIHandler(BaseHTTPRequestHandler):
         if not rows:
             return None
         role_counts: dict[str, int] = defaultdict(int)
+        player_ids: list[str] = []
+        player_names: list[str] = []
         out = {
             "player_key": TEAM_OTHER_TOKEN,
             "player_id": "",
             "player_name": display_name,
+            "other_player_ids": player_ids,
+            "other_player_names": player_names,
             "armed_force_id": "",
             "game_result": rows[0].get("game_result"),
             "kill_player": 0,
@@ -7645,6 +7676,12 @@ class APIHandler(BaseHTTPRequestHandler):
             "profit_loss": 0,
         }
         for row in rows:
+            player_id = str(row.get("player_id", "") or "").strip()
+            if player_id and player_id not in player_ids:
+                player_ids.append(player_id)
+            player_name = sanitize_player_name(row.get("player_name"))
+            if player_name and player_name not in player_names:
+                player_names.append(player_name)
             role_id = str(row.get("armed_force_id", "") or "")
             if role_id:
                 role_counts[role_id] += 1
@@ -7657,6 +7694,8 @@ class APIHandler(BaseHTTPRequestHandler):
             out["profit_loss"] += int(row.get("profit_loss", 0) or 0)
         if role_counts:
             out["armed_force_id"] = max(role_counts.items(), key=lambda item: item[1])[0]
+        if len(player_ids) == 1:
+            out["player_id"] = player_ids[0]
         return out
 
     def _api_players(self, params):
@@ -8011,6 +8050,8 @@ class APIHandler(BaseHTTPRequestHandler):
                         "out": 0,
                         "profit": 0,
                         "roles": [],
+                        "other_player_ids": [],
+                        "other_player_names": [],
                     }
                 ps = all_player_stats[slot_name]
                 ps["games"] += 1
@@ -8023,6 +8064,14 @@ class APIHandler(BaseHTTPRequestHandler):
                 ps["profit"] += int(bd.get("profit_loss", 0) or 0)
                 if bd.get("armed_force_id"):
                     ps["roles"].append(str(bd["armed_force_id"]))
+                for other_player_id in bd.get("other_player_ids") or []:
+                    other_player_id = str(other_player_id or "").strip()
+                    if other_player_id and other_player_id not in ps["other_player_ids"]:
+                        ps["other_player_ids"].append(other_player_id)
+                for other_player_name in bd.get("other_player_names") or []:
+                    other_player_name = str(other_player_name or "").strip()
+                    if other_player_name and other_player_name not in ps["other_player_names"]:
+                        ps["other_player_names"].append(other_player_name)
                 game["player_records"][slot_name] = bd
 
             games.append(game)
@@ -8051,6 +8100,8 @@ class APIHandler(BaseHTTPRequestHandler):
                     "player_key": ps["player_key"],
                     "player_id": ps["player_id"],
                     "player_name": ps["player_name"],
+                    "other_player_ids": ps.get("other_player_ids", []),
+                    "other_player_names": ps.get("other_player_names", []),
                     "games": g,
                     "evac_rate_num": er,
                     "evac_rate": f"{er * 100:.1f}%",
@@ -8352,6 +8403,17 @@ class APIHandler(BaseHTTPRequestHandler):
         def player_export_label(p):
             name = str(p.get("player_name", "") or "")
             player_id = str(p.get("player_id", "") or "")
+            if str(p.get("player_key") or "") == TEAM_OTHER_TOKEN:
+                other_names = [
+                    str(item or "").strip()
+                    for item in (p.get("other_player_names") or [])
+                    if str(item or "").strip()
+                ]
+                if other_names:
+                    suffix = " / ".join(other_names[:3])
+                    if len(other_names) > 3:
+                        suffix += " 等"
+                    return f"{name} ({suffix})"
             if name and player_id and duplicate_names[name] > 1:
                 return f"{name} (ID {player_id[-6:]})"
             return name
