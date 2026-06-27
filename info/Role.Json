@@ -56,7 +56,7 @@
     },
     "30011": {
         "name": "比特",
-        "avatar": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_69155928e941d.png",
+        "avatar": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_6a22a15fd5e3a.png",
         "avatar2": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_691558a6b388f.png"
     },
     "40011": {
@@ -88,5 +88,10 @@
         "name": "回响",
         "avatar": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_69e049b42d806.png",
         "avatar2": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_69e049cc66526.png"
+    },
+    "30012": {
+        "name": "液氮",
+        "avatar": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_6a3df00f2a371.png",
+        "avatar2": "https://wegame.gtimg.com/g.2001918-r.ea725/oss-images/oss_6a3df04eef587.png"
     }
 }
